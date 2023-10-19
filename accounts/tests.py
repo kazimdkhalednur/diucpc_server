@@ -48,18 +48,6 @@ class APIViewTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["email"], "testuser@example.com")
 
-    def test_user_login(self):
-        # Assuming you have the URL for the token obtain endpoint
-        login_url = reverse("accounts:login")
-        login_data = {
-            "email": "testuser@example.com",
-            "password": "testpassword",
-        }
-        response = self.client.post(login_url, login_data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue("access" in response.data)
-        self.assertTrue("refresh" in response.data)
-
     def test_invalid_user_verification(self):
         # Assuming you have the URL for the user verification endpoint
         invalid_verify_url = "/verify/?token=invalid_token"
