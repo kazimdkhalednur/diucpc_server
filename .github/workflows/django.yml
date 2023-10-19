@@ -13,6 +13,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  CLIENT_LOGIN_URL: http://localhost:3000/login
+
 jobs:
   build:
 
