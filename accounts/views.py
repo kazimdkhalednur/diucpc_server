@@ -49,12 +49,15 @@ class UserVerifyAPIView(APIView):
         if user is not None and account_activation_token.check_token(user, token):
             user.is_active = True
             user.save()
-            return redirect(settings.CLIENT_URL + "/verification-success", status=status.HTTP_302_FOUND)
+            return redirect(
+                settings.CLIENT_URL + "/verification-success",
+                status=status.HTTP_302_FOUND,
+            )
         elif user is not None and not account_activation_token.check_token(user, token):
             send_email(request, user)
             return Response(
                 {
-                    "message": "Verify timeout. Please check your inbox. A new verification mail is sent"
+                    "message": "Verify timeout. Please check your inbox. A new verification mail is sent"  # noqa: E501
                 },
                 status=status.HTTP_202_ACCEPTED,
             )

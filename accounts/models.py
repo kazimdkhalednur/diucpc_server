@@ -7,8 +7,7 @@ from .utils import profile_photo_path
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     profile_photo = models.ImageField(
-        upload_to=profile_photo_path, blank=
-        True, null=True
+        upload_to=profile_photo_path, blank=True, null=True
     )
     USER_ROLE = (
         ("general", "General"),

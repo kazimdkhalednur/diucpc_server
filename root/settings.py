@@ -162,10 +162,10 @@ CLIENT_URL = config("CLIENT_URL", cast=str)
 # ckeditor
 CKEDITOR_UPLOAD_PATH = "uploads/"
 CKEDITOR_CONFIGS = {
-    'default': {
-        'toolbar': 'full',
-        'height': 300,
-        'width': "full",
+    "default": {
+        "toolbar": "full",
+        "height": 300,
+        "width": "full",
     },
 }
 

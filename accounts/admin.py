@@ -30,12 +30,7 @@ class CustomUserAdmin(UserAdmin):
             "Personal info",
             {"fields": ("first_name", "last_name", "email", "profile_photo")},
         ),
-        (
-            "User Role",
-            {
-                "fields": ("role",)
-            }
-        ),
+        ("User Role", {"fields": ("role",)}),
         (
             "Permissions",
             {

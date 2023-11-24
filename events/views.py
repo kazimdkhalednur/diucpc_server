@@ -1,9 +1,11 @@
 from rest_framework.generics import ListAPIView, RetrieveAPIView
+
 from .serializers import EventSerializer
 
 
 class EventListAPIView(ListAPIView):
     """Event list"""
+
     serializer_class = EventSerializer
 
 

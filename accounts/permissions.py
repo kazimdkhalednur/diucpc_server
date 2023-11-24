@@ -1,14 +1,17 @@
 from rest_framework.permissions import BasePermission
 
 
-
 class IsGeneralMember(BasePermission):
     """
     Allows access only to General memebers.
     """
 
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.role == "general")
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "general"
+        )
 
 
 class IsAssociativeMember(BasePermission):
@@ -17,7 +20,11 @@ class IsAssociativeMember(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.role == "associative")
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "associative"
+        )
 
 
 class IsExecutiveMember(BasePermission):
@@ -26,7 +33,11 @@ class IsExecutiveMember(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.role == "executive")
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "executive"
+        )
 
 
 class IsCoreMember(BasePermission):
@@ -35,4 +46,8 @@ class IsCoreMember(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.role == "core")
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "core"
+        )
