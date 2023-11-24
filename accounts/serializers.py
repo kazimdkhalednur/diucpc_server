@@ -30,11 +30,8 @@ class UserCreateSerializer(ModelSerializer):
         return data
 
     def save(self, **kwargs):
-        if User.objects.filter(email=self.validated_data["email"]).exists():
-            raise serializers.ValidationError("Email already exists")
-
         self.validated_data.pop("password2")
-        user = User(**self.validated_data)
+        user = User(is_active=False, **self.validated_data)
         user.set_password(self.validated_data["password"])
         user.save()
         return user
