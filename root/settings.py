@@ -42,9 +42,11 @@ INSTALLED_APPS = [
     # my app
     "accounts.apps.AccountsConfig",
     "blogs.apps.BlogsConfig",
+    "events.apps.EventsConfig",
     # third-party
     "rest_framework",
     "rest_framework_simplejwt",
+    "ckeditor",
 ]
 
 MIDDLEWARE = [
@@ -143,12 +145,29 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
 }
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = config(
+    "EMAIL_BACKEND", cast=str, default="django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = config("EMAIL_HOST", cast=str)
+EMAIL_PORT = config("EMAIL_PORT", cast=str)
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", cast=str)
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", cast=str)
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", cast=str)
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", cast=str)
 
-CLIENT_LOGIN_URL = config("CLIENT_LOGIN_URL", cast=str)
+CLIENT_URL = config("CLIENT_URL", cast=str)
+
+# ckeditor
+CKEDITOR_UPLOAD_PATH = "uploads/"
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 300,
+        'width': "full",
+    },
+}
 
 # import local_settings.py
 if DEBUG:

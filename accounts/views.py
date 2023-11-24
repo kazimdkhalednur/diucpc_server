@@ -15,11 +15,6 @@ class SignUpAPIView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        if User.objects.filter(email=request.data["email"]).exists():
-            return Response(
-                {"detail": "Email Already Exist"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
         serializer = UserCreateSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
@@ -54,8 +49,16 @@ class UserVerifyAPIView(APIView):
         if user is not None and account_activation_token.check_token(user, token):
             user.is_active = True
             user.save()
-            return redirect(settings.CLIENT_LOGIN_URL, status=status.HTTP_302_FOUND)
-        return Response({"error": "Invalid"}, status=status.HTTP_401_UNAUTHORIZED)
+            return redirect(settings.CLIENT_URL + "/verification-success", status=status.HTTP_302_FOUND)
+        elif user is not None and not account_activation_token.check_token(user, token):
+            send_email(request, user)
+            return Response(
+                {
+                    "message": "Verify timeout. Please check your inbox. A new verification mail is sent"
+                },
+                status=status.HTTP_202_ACCEPTED,
+            )
+        return Response({"error": "Invalid User"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class UserInfoAPIView(APIView):

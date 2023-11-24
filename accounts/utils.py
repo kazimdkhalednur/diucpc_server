@@ -33,10 +33,8 @@ def send_email(request, user):
         + activation_link
     )
     from_email = settings.DEFAULT_FROM_EMAIL
-    msg = EmailMultiAlternatives(
-        subject, body, f"Hackverse <{from_email}>", [user.email]
-    )
-    return msg.send()
+    msg = EmailMultiAlternatives(subject, body, f"DIU CPC <{from_email}>", [user.email])
+    msg.send()
 
 
 def profile_photo_path(instance, filename):
