@@ -6,8 +6,12 @@ from .utils import convert_title_to_slug
 
 class Event(models.Model):
     title = models.CharField(max_length=300)
-    slug = models.SlugField(unique=True, blank=True)
-    cover_photo = models.ImageField(upload_to="cover/", blank=True, null=True)
+    slug = models.SlugField(
+        unique=True,
+        blank=True,
+        help_text="Don't write anything in this field. It will automatically generate when you save this.",  # noqa: E501
+    )
+    thumbnail = models.ImageField(upload_to="cover/", blank=True, null=True)
     description = RichTextUploadingField(blank=True, null=True)
     started_date = models.DateField(blank=True, null=True)
     ended_date = models.DateField(blank=True, null=True)
@@ -23,3 +27,7 @@ class Event(models.Model):
     def save(self, *args, **kwargs):
         self.slug = convert_title_to_slug(self)
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.thumbnail.delete()
+        super().delete(*args, **kwargs)
