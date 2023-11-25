@@ -4,7 +4,7 @@ from .views import *
 
 app_name = "events"
 
-urlpattens = [
+urlpatterns = [
     path("", EventListAPIView.as_view(), name="list"),
     path("<str:slug>/", EventRetrieveAPIView.as_view(), name="detail"),
 ]

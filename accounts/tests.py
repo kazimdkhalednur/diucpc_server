@@ -1,9 +1,41 @@
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from .models import User
+from .utils import profile_photo_path
+
+
+class UserModelTestCase(TestCase):
+    def test_create_user(self):
+        user = User.objects.create_user(
+            email="test@example.com",
+            username="testuser",
+            password="testpassword",
+        )
+        self.assertEqual(user.email, "test@example.com")
+        self.assertEqual(user.username, "testuser")
+        self.assertEqual(user.role, "general")
+        self.assertTrue(user.check_password("testpassword"))
+
+    def test_profile_photo_upload(self):
+        user = User.objects.create_user(
+            email="test@example.com",
+            username="testuser",
+            password="testpassword",
+        )
+        # Test uploading a profile photo
+        with open(settings.BASE_DIR / "test/pictures/images.png", "rb") as photo_file:
+            user.profile_photo.save("images.png", photo_file)
+
+        self.assertTrue(
+            user.profile_photo.url.startswith(
+                f"/uploads/{profile_photo_path(user, photo_file.name)}"
+            )
+        )
+        user.profile_photo.delete()
 
 
 class APIViewTestCase(TestCase):

@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView, Response
 
 from .models import User
@@ -12,8 +12,6 @@ from .utils import activation_token, send_email
 
 
 class SignUpAPIView(APIView):
-    permission_classes = [AllowAny]
-
     def post(self, request):
         serializer = UserCreateSerializer(data=request.data)
         if serializer.is_valid():
@@ -27,8 +25,6 @@ class SignUpAPIView(APIView):
 
 
 class UserVerifyAPIView(APIView):
-    permission_classes = [AllowAny]
-
     def get(self, request):
         if request.GET["token"] is None:
             return Response(
@@ -65,6 +61,8 @@ class UserVerifyAPIView(APIView):
 
 
 class UserInfoAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         user = get_object_or_404(User, id=request.user.id)
         serializer = UserInfoSerializer(user)
