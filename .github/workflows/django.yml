@@ -37,4 +37,6 @@ jobs:
         pip install -r requirements.txt
     - name: Run Tests
       run: |
+        touch .env
+        cat .github/workflows/test.env > .env
         python manage.py test
