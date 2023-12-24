@@ -7,7 +7,14 @@ from .models import User
 class UserInfoSerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = ["first_name", "last_name", "email", "username"]
+        fields = [
+            "first_name",
+            "last_name",
+            "email",
+            "username",
+            "role",
+            "profile_photo",
+        ]
 
 
 class UserCreateSerializer(ModelSerializer):
@@ -26,7 +33,7 @@ class UserCreateSerializer(ModelSerializer):
 
     def validate(self, data):
         if data["password"] != data["password2"]:
-            raise serializers.ValidationError("Password doesn't match")
+            raise serializers.ValidationError({"password", "Password doesn't match"})
         return data
 
     def save(self, **kwargs):

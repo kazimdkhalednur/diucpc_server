@@ -45,6 +45,15 @@ class CustomUserAdmin(UserAdmin):
         ),
         ("Important dates", {"fields": ("last_login", "date_joined")}),
     )
+    add_fieldsets = (
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("username", "role", "password1", "password2"),
+            },
+        ),
+    )
 
     def has_view_permission(self, request, obj=None):
         return request.user.is_superuser

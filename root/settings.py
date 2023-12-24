@@ -45,11 +45,13 @@ INSTALLED_APPS = [
     "accounts.apps.AccountsConfig",
     "blogs.apps.BlogsConfig",
     "events.apps.EventsConfig",
+    "committees.apps.CommitteesConfig",
     # third-party
     "rest_framework",
     "rest_framework_simplejwt",
     "ckeditor",
     "corsheaders",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [

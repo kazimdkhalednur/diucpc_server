@@ -8,7 +8,7 @@ app_name = "accounts"
 urlpatterns = [
     path("signup/", SignUpAPIView.as_view(), name="signup"),
     path("verify/", UserVerifyAPIView.as_view(), name="verify"),
-    path("token/", TokenObtainPairView.as_view(), name="login"),
+    path("login/", TokenObtainPairView.as_view(), name="login"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    path("user_info/", UserInfoAPIView.as_view(), name="user_info"),
+    path("user_info/", UserRetrieveUpdateDestroyAPIView.as_view(), name="user_info"),
 ]

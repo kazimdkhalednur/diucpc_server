@@ -1,10 +1,10 @@
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
-from .models import Event
+from .models import Committee
 
 
-@receiver(pre_save, sender=Event)
+@receiver(pre_save, sender=Committee)
 def pre_save_image(sender, instance, *args, **kwargs):
     """instance old image file will delete from os"""
     try:
