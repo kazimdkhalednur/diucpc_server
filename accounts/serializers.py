@@ -35,7 +35,7 @@ class UserCreateSerializer(ModelSerializer):
 
     def validate(self, data):
         if data["password"] != data["password2"]:
-            raise serializers.ValidationError({"password", "Password doesn't match"})
+            raise serializers.ValidationError({"password": "Password doesn't match"})
         return data
 
     def save(self, **kwargs):

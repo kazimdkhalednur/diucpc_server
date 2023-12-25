@@ -1,76 +1,18 @@
 from time import sleep
 
 from django.conf import settings
-from django.contrib.sites.shortcuts import get_current_site
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from faker import Faker
 from rest_framework import status
-from rest_framework.serializers import ValidationError
 from rest_framework.test import APITestCase
 
-from .models import User
-from .utils import activation_token, profile_photo_path
+from ..models import User
+from ..utils import activation_token, profile_photo_path
 
 fake = Faker()
-
-
-class UserModelTestCase(TestCase):
-    """Test for User Model"""
-
-    image_path = settings.BASE_DIR / "test/pictures/images.png"
-    user_data = {
-        "first_name": fake.first_name(),
-        "last_name": fake.last_name(),
-        "email": fake.email(),
-        "username": fake.user_name(),
-        "password": fake.password(),
-        "role": fake.random_element(
-            elements=("general", "associative", "executive", "core")
-        ),
-        "profile_photo": SimpleUploadedFile(
-            name="images.png",
-            content=open(image_path, "rb").read(),
-            content_type="image/png",
-        ),
-    }
-
-    def setUp(self):
-        self.user = User.objects.create_user(**self.user_data)
-
-    def test_create_user(self):
-        temp_user_data = self.user_data.copy()
-        temp_user_data.pop("profile_photo")
-
-        self.assertTrue(self.user.check_password(temp_user_data.pop("password")))
-        self.assertEqual(
-            self.user.profile_photo.url,
-            settings.MEDIA_URL
-            + profile_photo_path(self.user, self.user_data["profile_photo"].name),
-        )
-        for key, value in temp_user_data.items():
-            self.assertEqual(getattr(self.user, key), value)
-
-    def test_user_count(self):
-        self.assertEqual(User.objects.count(), 1)
-
-    def test_user_delete(self):
-        self.user.delete()
-        self.assertEqual(User.objects.count(), 0)
-
-    def test_user_default_role(self):
-        user = User.objects.create_user(
-            email=fake.email(),
-            username=fake.name(),
-            password=fake.password(),
-        )
-        self.assertEqual(user.role, "general")
-
-    def tearDown(self):
-        self.user.profile_photo.delete()
 
 
 class SignUpAPIViewTestCase(APITestCase):
@@ -111,14 +53,11 @@ class SignUpAPIViewTestCase(APITestCase):
         )
 
     def test_user_signup_with_invalid_data(self):
-        try:
-            new_user_data = self.user_data.copy()
-            new_user_data["password2"] = fake.password()
-            response = self.client.post(self.signup_url, new_user_data, format="json")
-        except ValidationError as e:
-            self.assertEqual(e.args[0].detail, {"password": "Password doesn't match"})
-        finally:
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        new_user_data = self.user_data.copy()
+        new_user_data["password2"] = fake.password()
+        response = self.client.post(self.signup_url, new_user_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["password"][0], "Password doesn't match")
 
 
 class UserVerifyAPIViewTestCase(APITestCase):
@@ -234,18 +173,10 @@ class UserInfoAPIViewTestCase(APITestCase):
         response = self.client.get(self.user_info_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        if settings.DEBUG:
-            request = response.request
-            protocol = "https" if request.is_secure() else "http"
-            domain = get_current_site(request).domain
-            self.assertEqual(
-                response.data.pop("profile_photo"),
-                protocol
-                + "://"
-                + domain
-                + settings.MEDIA_URL
-                + profile_photo_path(self.user, self.user_data["profile_photo"].name),
-            )
+        profile_photo_url = profile_photo_path(
+            self.user, self.user_data["profile_photo"].name
+        )
+        self.assertTrue(response.data["profile_photo"].endswith(profile_photo_url))
 
         temp_user_data = self.user_data.copy()
         temp_user_data.pop("profile_photo")
@@ -275,10 +206,10 @@ class UserInfoAPIViewTestCase(APITestCase):
             "last_name": fake.last_name(),
             "username": fake.user_name(),
             "role": fake.random_element(
-                elements=("general", "associative", "executive", "core")
+                elements=(choices[0] for choices in User.USER_ROLE_CHOICES)
             ),
             "profile_photo": SimpleUploadedFile(
-                name="images.png",
+                name="update_images.png",
                 content=open(self.image_path, "rb").read(),
                 content_type="image/png",
             ),
@@ -288,18 +219,11 @@ class UserInfoAPIViewTestCase(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        if settings.DEBUG:
-            request = response.request
-            protocol = "https" if request.is_secure() else "http"
-            domain = get_current_site(request).domain
-            self.assertEqual(
-                response.data.pop("profile_photo"),
-                protocol
-                + "://"
-                + domain
-                + settings.MEDIA_URL
-                + profile_photo_path(self.user, update_data["profile_photo"].name),
-            )
+        update_user = User.objects.get(email=self.user_data["email"])
+        profile_photo_url = profile_photo_path(
+            update_user, update_data["profile_photo"].name
+        )
+        self.assertTrue(response.data["profile_photo"].endswith(profile_photo_url))
         update_data.pop("profile_photo")
 
         for key, value in update_data.items():
