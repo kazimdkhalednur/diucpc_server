@@ -22,3 +22,7 @@ class User(AbstractUser):
 
     def __str__(self) -> str:
         return self.email
+
+    def delete(self, *args, **kwargs):
+        self.profile_photo.delete()
+        super().delete(*args, **kwargs)

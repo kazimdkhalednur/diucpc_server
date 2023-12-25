@@ -10,9 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 from decouple import Csv, config
+from django.conf import global_settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,15 +45,20 @@ INSTALLED_APPS = [
     "accounts.apps.AccountsConfig",
     "blogs.apps.BlogsConfig",
     "events.apps.EventsConfig",
+    "committees.apps.CommitteesConfig",
     # third-party
     "rest_framework",
     "rest_framework_simplejwt",
     "ckeditor",
+    "corsheaders",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -132,7 +139,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "static"
-MEDIA_URL = "uploads/"
+MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
@@ -140,13 +147,22 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# rest_framework
+STORAGES = {
+    **global_settings.STORAGES,
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# rest_framework configuration
 REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
 }
 
+# email configuration
 EMAIL_BACKEND = config(
     "EMAIL_BACKEND", cast=str, default="django.core.mail.backends.console.EmailBackend"
 )
@@ -168,6 +184,25 @@ CKEDITOR_CONFIGS = {
         "width": "full",
     },
 }
+
+# Simple JWT configuratiom
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "UPDATE_LAST_LOGIN": True,
+}
+
+# drf-spectacular configuration
+SPECTACULAR_SETTINGS = {
+    "TITLE": "CPC API",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
+
+# cors configuration
+CORS_ALLOWED_ORIGINS = config("CORS_ALLOWED_ORIGINS", cast=Csv())
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://\w+\.vercel\.app$",
+]
 
 # import local_settings.py
 if DEBUG:

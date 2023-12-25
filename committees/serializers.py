@@ -1,9 +1,9 @@
 from rest_framework.serializers import ModelSerializer
 
-from .models import *
+from .models import Committee
 
 
-class BlogSerializer(ModelSerializer):
+class CommitteeSerializer(ModelSerializer):
     class Meta:
-        model = Blog
+        model = Committee
         exclude = ("id", "created_at", "updated_at")
