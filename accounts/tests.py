@@ -214,15 +214,6 @@ class UserInfoAPIViewTestCase(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(**self.user_data)
 
-    def login(self):
-        login_url = reverse("accounts:login")
-        login_data = {
-            "email": self.user_data["email"],
-            "password": self.user_data["password"],
-        }
-        response = self.client.post(login_url, login_data, format="json")
-        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + response.data["access"])
-
     def test_user_info_without_authentication(self):
         response = self.client.get(self.user_info_url)
 
@@ -231,8 +222,14 @@ class UserInfoAPIViewTestCase(APITestCase):
             response.data["detail"], "Authentication credentials were not provided."
         )
 
-    def test_user_info(self):
-        self.login()
+    def test_get_user_info(self):
+        login_url = reverse("accounts:login")
+        login_data = {
+            "email": self.user_data["email"],
+            "password": self.user_data["password"],
+        }
+        response = self.client.post(login_url, login_data, format="json")
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + response.data["access"])
 
         response = self.client.get(self.user_info_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -242,7 +239,7 @@ class UserInfoAPIViewTestCase(APITestCase):
             protocol = "https" if request.is_secure() else "http"
             domain = get_current_site(request).domain
             self.assertEqual(
-                response.data["profile_photo"],
+                response.data.pop("profile_photo"),
                 protocol
                 + "://"
                 + domain
@@ -251,13 +248,217 @@ class UserInfoAPIViewTestCase(APITestCase):
             )
 
         temp_user_data = self.user_data.copy()
-        temp_user_data.pop("password")
         temp_user_data.pop("profile_photo")
-        response.data.pop("profile_photo")
 
+        self.assertTrue(self.user.check_password(temp_user_data.pop("password")))
         for key, value in temp_user_data.items():
             self.assertEqual(response.data[key], value)
         self.assertEqual(response.data["role"], "general")
 
+    def test_get_user_info_with_invalid_token(self):
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer invalid_token")
+        response = self.client.get(self.user_info_url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_user_info_update(self):
+        login_url = reverse("accounts:login")
+        login_data = {
+            "email": self.user_data["email"],
+            "password": self.user_data["password"],
+        }
+        response = self.client.post(login_url, login_data, format="json")
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + response.data["access"])
+
+        update_data = {
+            "first_name": fake.first_name(),
+            "last_name": fake.last_name(),
+            "username": fake.user_name(),
+            "role": fake.random_element(
+                elements=("general", "associative", "executive", "core")
+            ),
+            "profile_photo": SimpleUploadedFile(
+                name="images.png",
+                content=open(self.image_path, "rb").read(),
+                content_type="image/png",
+            ),
+        }
+        response = self.client.patch(
+            self.user_info_url, update_data, format="multipart"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        if settings.DEBUG:
+            request = response.request
+            protocol = "https" if request.is_secure() else "http"
+            domain = get_current_site(request).domain
+            self.assertEqual(
+                response.data.pop("profile_photo"),
+                protocol
+                + "://"
+                + domain
+                + settings.MEDIA_URL
+                + profile_photo_path(self.user, update_data["profile_photo"].name),
+            )
+        update_data.pop("profile_photo")
+
+        for key, value in update_data.items():
+            self.assertEqual(response.data[key], value)
+
+    def test_user_update_email(self):
+        login_url = reverse("accounts:login")
+        login_data = {
+            "email": self.user_data["email"],
+            "password": self.user_data["password"],
+        }
+        response = self.client.post(login_url, login_data, format="json")
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + response.data["access"])
+
+        update_data = {
+            "email": fake.email(),
+        }
+        response = self.client.patch(self.user_info_url, update_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertNotEqual(response.data["email"], update_data["email"])
+
     def tearDown(self):
-        User.objects.filter(email=self.user_data["email"]).delete()
+        self.user.profile_photo.delete()
+
+
+class TokenObtainPairViewAPIView(APITestCase):
+    """Test for TokenObtainPairViewAPIView"""
+
+    image_path = settings.BASE_DIR / "test/pictures/images.png"
+    user_data = {
+        "first_name": fake.name(),
+        "last_name": fake.name(),
+        "email": fake.email(),
+        "username": fake.user_name(),
+        "password": fake.password(),
+        "profile_photo": SimpleUploadedFile(
+            name="images.png",
+            content=open(image_path, "rb").read(),
+            content_type="image/png",
+        ),
+    }
+    login_url = reverse("accounts:login")
+
+    def setUp(self):
+        self.user = User.objects.create_user(**self.user_data)
+
+    def test_login(self):
+        login_data = {
+            "email": self.user_data["email"],
+            "password": self.user_data["password"],
+        }
+        response = self.client.post(self.login_url, login_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
+
+    def test_login_with_invalid_credentials(self):
+        login_data = {
+            "email": self.user_data["email"],
+            "password": fake.password(),
+        }
+        response = self.client.post(self.login_url, login_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "No active account found with the given credentials",
+        )
+
+    def tearDown(self):
+        self.user.profile_photo.delete()
+
+
+class TokenRefreshViewAPIView(APITestCase):
+    """Test for TokenRefreshViewAPIView"""
+
+    image_path = settings.BASE_DIR / "test/pictures/images.png"
+    user_data = {
+        "first_name": fake.name(),
+        "last_name": fake.name(),
+        "email": fake.email(),
+        "username": fake.user_name(),
+        "password": fake.password(),
+        "profile_photo": SimpleUploadedFile(
+            name="images.png",
+            content=open(image_path, "rb").read(),
+            content_type="image/png",
+        ),
+    }
+    login_url = reverse("accounts:login")
+    refresh_url = reverse("accounts:token_refresh")
+
+    def setUp(self):
+        self.user = User.objects.create_user(**self.user_data)
+
+    def test_refresh_token(self):
+        login_data = {
+            "email": self.user_data["email"],
+            "password": self.user_data["password"],
+        }
+        response = self.client.post(self.login_url, login_data, format="json")
+        refresh_token = response.data["refresh"]
+        response = self.client.post(
+            self.refresh_url, {"refresh": refresh_token}, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", response.data)
+
+    def test_refresh_token_with_invalid_token(self):
+        response = self.client.post(
+            self.refresh_url, {"refresh": "invalid_token"}, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data["detail"], "Token is invalid or expired")
+
+    def tearDown(self):
+        self.user.profile_photo.delete()
+
+
+class TokenVerifyViewAPIView(APITestCase):
+    """Test for TokenVerifyViewAPIView"""
+
+    image_path = settings.BASE_DIR / "test/pictures/images.png"
+    user_data = {
+        "first_name": fake.name(),
+        "last_name": fake.name(),
+        "email": fake.email(),
+        "username": fake.user_name(),
+        "password": fake.password(),
+        "profile_photo": SimpleUploadedFile(
+            name="images.png",
+            content=open(image_path, "rb").read(),
+            content_type="image/png",
+        ),
+    }
+    login_url = reverse("accounts:login")
+    verify_url = reverse("accounts:token_verify")
+
+    def setUp(self):
+        self.user = User.objects.create_user(**self.user_data)
+
+    def test_verify_token(self):
+        login_data = {
+            "email": self.user_data["email"],
+            "password": self.user_data["password"],
+        }
+        response = self.client.post(self.login_url, login_data, format="json")
+        access_token = response.data["access"]
+        response = self.client.post(
+            self.verify_url, {"token": access_token}, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_verify_token_with_invalid_token(self):
+        response = self.client.post(
+            self.verify_url, {"token": "invalid_token"}, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data["detail"], "Token is invalid or expired")
+
+    def tearDown(self):
+        self.user.profile_photo.delete()

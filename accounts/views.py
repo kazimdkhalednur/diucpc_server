@@ -5,6 +5,7 @@ from django.utils.http import urlsafe_base64_decode
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView, Response
 
@@ -157,6 +158,7 @@ class UserRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
     serializer_class = UserInfoSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [FormParser, MultiPartParser]
 
     def get_object(self):
         return self.request.user
