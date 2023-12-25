@@ -36,9 +36,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r test_requirements.txt
-        python manage.py collectstatic --noinput
     - name: Run Tests
       run: |
         touch .env
         cat .github/workflows/test.env > .env
+        python manage.py collectstatic --noinput
         python manage.py test
