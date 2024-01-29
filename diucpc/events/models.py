@@ -23,8 +23,8 @@ class Event(models.Model):
     registration_link = models.URLField(blank=True, null=True)
     registration_note = models.TextField(blank=True, null=True)
     platform = models.TextField(blank=True, null=True)
-    started_date = models.DateField(blank=True, null=True)
-    ended_date = models.DateField(blank=True, null=True)
+    started_date = models.DateTimeField(blank=True, null=True)
+    ended_date = models.DateTimeField(blank=True, null=True)
     EVENT_STATUS = (("draft", "draft"), ("published", "published"))
     status = models.CharField(max_length=20, choices=EVENT_STATUS, default="draft")
 
