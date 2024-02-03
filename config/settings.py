@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "diucpc.carousels.apps.CarouselsConfig",
     "diucpc.committees.apps.CommitteesConfig",
     "diucpc.events.apps.EventsConfig",
+    "diucpc.certificates.apps.CertificatesConfig",
     # third party
     "rest_framework",
     "rest_framework_simplejwt",

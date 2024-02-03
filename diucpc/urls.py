@@ -4,4 +4,5 @@ urlpatterns = [
     path("carousels/", include("diucpc.carousels.urls")),
     path("committees/", include("diucpc.committees.urls")),
     path("events/", include("diucpc.events.urls")),
+    path("certificates/", include("diucpc.certificates.urls")),
 ]
